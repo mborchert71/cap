@@ -1,37 +1,37 @@
 sample - cap
 
-notice: 
-	no interface , until fully statisfied with code and fully documented
+	copy and paste api 
+	-uses folders , sqlite and php pdo 
+		to create a simple way of having easy access to a database or
+		a transparent base structure for a more sophisticated db-connector via web.
 
-	why the folders.
+	- so many folders with SQL - Command Words
 	as I always preferred the server to be responsible for authentication (i even like the popup)
 	at the same time i always disliked url_rewriting and manipulation (mod_rewrite).
 	the url should be read as clear as possible, thats the reason having alot of folders
 	with nothing in it but an index.php.
-	
-	that is one  the main reasons for this little project:
+	And it is the main reason for this little project:
 	having an unified request-handling of sql-queries
-	 
-Todo
-	doku
-	mit und nach doku optimize
-	write comments
-	web-usage :
-		# not designed for moviedatabase or large scale data-sets 
+
+	- as is ; it is not designed for large scale data-sets 
+	
+	- background
+
 		# global-player-sites offer huge data-amount >>>	personalized small snapshot
-	 	# there is no guarantie that the g-p-s keep and/or offer! the data. 
+
+	 	# there is no guarantie that the g-p-s keep and/or offer! the data in future.
 	 		(not even on paysites >>> go to Ford and tell them you want to buy an 1934 Oldtimer,
-	 			well it might/will become possible ; as soon as all plans are digitized and the factories and their robots become more flexible
+	 			well it might/will become possible ; as soon as all plans are digitized and and and...
 	 			but thats another story...)
-		# cloud is great,but in a personal point of view its better having a real world disc. 
-	option : cache last query on insert , refuse insert on a too short delay having duplicate data
-	todos in file
+		# cloud is great,but from  personal point of view its better having a real world disc. 
+
+todo:
 	tests
 
-Version 0.0.0
-
+Version 0.2.0
 
 Changes
+2011-07-03	deleted class.php cause its not needed in an single-sample environment;finished query token (left out:union,join,on)
 2011-06-25	ported from mysql to sqlite , if table not exist automatic creation
 2011-06-16	datamodel + queries moved to config.inc . sqlite connection
 2011-06-15	introduced "cap" the php copy + api + paste kit.
