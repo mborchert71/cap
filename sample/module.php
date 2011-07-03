@@ -15,7 +15,7 @@ abstract class module{
 	/**
 	 *
 	 */
-	public function __construct($c){
+		public function __construct(&$c){
 			try{
 				$this->cfg = $c; 
 				switch ($c->driver){
@@ -35,7 +35,8 @@ abstract class module{
 					);
 			}
 			$this->db-> query("SET NAMES 'utf8';");
-			$this->req=&$_REQUEST;
+
+			$this->req=&$c->request;
 			
 			try{
 				if(!$q=$this->db->query("SELECT max(id) FROM {$this->req['table']};"))
@@ -53,125 +54,87 @@ abstract class module{
 			}
 		}
 	/**
+	 * The key request options:
+	 *  ../module/?number		 ; meaning depends on do-request or implementation
+	 *  ../module/?function-call ; the value must be null ; functionname has to be first key
+	 *	../module/?do=Action     ; create, insert, select, update, delete, set, get
+	 *	../module/select/?columns (&from) &where &having &group &order &limit &offset
 	 *
+	 *	array key
+	 *	columns  ( , from , where , having , group , order )
+	 *  columns may be expressed as an array. 
 	 */
-		public function get_data_handle(){
-			return $this->db;
-		}
-	/**
-	 *
-	 */
-		public function set_data_handle(&$db){
-			$this->db=&$db;
-		}
-	/**
-	 *
-	 */
-		public function get_request_data(){
-			return $this->req;
-		}
-	/**
-	 *
-	 */
-		public function set_request_data(&$req){
-			$this->req=&$req;
-		}
-	/**
-	 *
-	 */
-		public function get_argument($property=null){
-			return $this->arg->$property;
-		}
-	/**
-	 *
-	 */
-		public function set_argument($property=null,$value=null){
-			$this->arg->$property=$value;
-		}
-	/**
-	 *
-	 */
-		public function get_arguments(){
-			return $this->arg;
-		}
-	/**
-	 *
-	 */
-		public function set_arguments($arg){
-			$this->arg->$arg;
-		}
-	/**
-		* The special case first passed request:
-		*
-		*	../module/?functionCall
-		*	../module/?do=Action
-		*	../module/?Column Operator Value
-		* 
-		*		Single Where Condition ;White-Spaces are Mandatory;
-		*		To express Equality(=) write 'is'; eg: '../module/?id is 123'.
-		*		2part operators have to be connected with minus; eg:'x IS-NOT NULL'
-		*		Further Arguments may be added;
-		*   Please see the coresponding Query for Details.
-		*
-		*	../module/?functionCall&argument1=value&argument2=value&..	
-		*	../module/?do=Action&argument1=value&argument2=value&..	
-		*	../module/?Column Operator Value&argument1=value&argument2=value&..	
-		*/
-		public function prepare_request(){
+		public function request_prepare(){
+	
+		/**
+		 * DO
+		 * if no 'do' action is specified ,bringing up the 'describe' info-data.	
+		 */			
+		if(!$this->req["do"]) $this->req["do"]="describe";
 		
-			//No 'do' action specified default is 'api'. Bringing up the info-data.				
-			if(!$this->req["do"]) $this->req["do"]="describe";
-			
-			//if first argument is empty, then assumed to be a special case
-			if(current($this->req)==="" && count($this->req)){
+		/**
+		 * FUNCTIONCALL
+		 * if first argument is empty, then assumed to be a special case
+		 */
+		if(current($this->req)==="" && count($this->req)){
 
-				//if the first key is just a number skip the function-call and where-constructor
-				if(preg_match("/^[0-9]$/",key($this->req))){
-					
-					try{
-						$w= explode("&",$_SERVER["QUERY_STRING"]);//NOTE: a not so nice global
-						$w= $w[0];
-						$w= explode(" ",urldecode($w));
-						
-						//SHORTHAND FUNCTION CALL
-						if(count($w)==1 && $this->req["do"]=="describe"){
-							$this->req["do"] 	  = $w[0];
-							//WHERE EXPRESSION as key=value Hash
-							if($this->req["where"]){
-								$tmp = explode(" ",$this->req["where"]);
-								$reserved_words=array("grant","set","select","alter");
-								foreach($tmp as $word){
-									if(in_array(strtolower($word),$reserved_words))
-										trigger_error(
-													"where expr has spearwords and there for is not allowed",
-													E_USER_ERROR);
-								}
-							$this->req["where"]="where ".$this->req["where"];  
-							}
-						}	
-					}catch(Exception $e){
-						$this->req["do"] 	  = "describe";
-						$this->req["where"] = "";
-					}
+			//skip if the first key is a number 
+			if(preg_match("/^[0-9]$/",key($this->req))){
 
-				}
+				$w= explode("&",$_SERVER["QUERY_STRING"]);//NOTE: a not so nice global
+				$w= $w[0];
+				$w= explode(" ",urldecode($w));
+				
+				//SHORTHAND FUNCTION CALL
+				if(count($w)==1 && $this->req["do"]=="describe"){
+					$this->req["do"] 	  = $w[0];
+				}	
 			}
-			else{
-				//WHERE EXPRESSION as key=value Hash
-				if($this->req["where"]){
-					$this->req["where"]=preg_replace("/ eq /"," = ", $this->req["where"]);
-					
-					$tmp = explode(" ",$this->req["where"]);
-					$reserved_words=array("grant","set","select","alter");
-					foreach($tmp as $word){
-						if(in_array(strtolower($word),$reserved_words))
-							trigger_error(
-											"where expr has spearwords and there for is not allowed",
-											E_USER_ERROR);
-					}
-					$this->req["where"]="where ".$this->req["where"];  
+		}
+
+		if($this->req["columns"]){
+			if(is_array($this->req["columns"]))
+				$this->req["columns"]= implode(",",($this->req["columns"]));
+			$this->request_secure("columns");
+		}
+		if($this->req["from"]){
+			if(is_array($this->req["from"]))
+				$this->req["from"]= implode(",",($this->req["from"]));
+			$this->request_secure("from");
+		}
+		if($this->req["where"]){
+			$this->request_secure("where");
+		}
+		if($this->req["having"]){
+			$this->request_secure("having");
+		}
+		if($this->req["group"]){
+			$this->request_secure("group");			
+		}
+		if($this->req["order"]){
+			$this->request_secure("order");		
+		}
+		if($this->req["limit"]){
+			$this->request_secure("limit");			
+		}
+		if($this->req["offset"]){
+			$this->request_secure("offset");			
+		}
+	}
+	/**
+	 * 
+	 */
+		public function request_secure($key){
+			$tmp = explode(" ",str_replace(array("\n","\t","\r")," ",$this->req[$key]));
+			$swords=array("grant","set","alter");
+			foreach($tmp as $word){
+				if(in_array(strtolower($word),$swords)){
+					trigger_error(
+						"$key expr has words[".implode(",",$swords)."];these are not allowed",
+						E_USER_ERROR);
+					$this->req[$key]=" ";
 				}
-			}		
+			}			
 		}
 	/**
 	 *
@@ -274,7 +237,11 @@ abstract class module{
 		
 }
 
-//todo: cursor , streamer
+/**
+ * 
+ * The executor simplifies fetching different kind of records
+ *
+ */
 class sql_executer{
 
 	private $db;
@@ -298,28 +265,69 @@ class sql_executer{
 	}	
 }
 
-//todo: where[] array concated with and  , andwhere orwhere xorwhere  = value  , queue  ... distinct and all the reserved words
+/**
+ * 
+ * The sql_constructor takes a SQL-Object from configuration
+ * and merges it with the Request
+ * the configuration is stored in config.inc
+ * 
+ * query -> statements -> sql-object 
+ * 
+ * the json query-object is an array of all available queries for this module
+ * 
+ * the statements can be an array of sql-object that describe one transaction
+ * 
+ * the json sql-object:
+ * {
+ *	"prepare":[{"name":"table","required":true}]
+ *	,
+ *	"string":"SELECT * FROM sqlite_master UNION SELECT 'sqlite_version' as type,sqlite_version() as name,null as tbl_name,null as rootpage,null as sql  ORDER BY type "
+ *	,
+ *	"method":"fetch_all_assoc"
+ *	,
+ *	"result":"rows"
+ *	}
+ * 
+ * 	the prepare-object is an array of Request-keys
+ *  properties for the object-variant are:
+ *  name		 string  obligate;
+ *  defaultValue mixed	 value defaults to;
+ *  required	 bool    throws an error , if the value is not set;
+ *  func		 string  param_sum , param_binsum , param_concat
+ *  args		 mixed   arguments for func
+ *  escape		 bool	 escape value as sql-identifier
+ *  
+ *  a very special prepare key is 'query->statement[index]'
+ *  like 'query->select[0]'; getting the sql from the config
+ *  this way sql can be embedded in the current query
+ *  
+ *  @todo delegate many ifs to a functionCall 
+ *  >>>   if $key == $value  to  $this->handle$value();
+ *  
+ */
 class sql_constructor{
 	public $reserved_words=array("table","columns","values","set","from","where","on","join","union","group","having","order"); //limit offset 
 	public $stmt;
 	public $cfg;
+	/**
+	 * 
+	 * Constructor
+	 * @param object $stmt
+	 * @param mixed() $req
+	 * @param object $cfg
+	 */
 	public function __construct(&$stmt,&$_,&$cfg){
-		$this->cfg=&$cfg;
-		if(@count($stmt))
-		foreach ($stmt as &$qobj){	
-		if($qobj->prepare)	foreach($qobj->prepare as $i => $key){
 
+		$this->cfg=&$cfg;
+				
+		if(@count($stmt))	foreach ($stmt as &$qobj){
+		
+		if($qobj->prepare)	foreach($qobj->prepare as $i => $key){
+			/*
+			 * prepare key is an object
+			 */
 			if(is_object($key)){
 				$obj=$key; $key= $obj->name;
-
-				if($key=="columns"){
-					$cols=array();
-
-					foreach($this->cfg->columns as $_key => $def){
-							array_push($cols,'"'.$_key.'"');
-					}
-					$_REQUEST["columns"]=implode(",",$cols);
-				}
 
 				//DEFAULT-VALUE
 				if(isset($obj->defaultValue)){
@@ -336,6 +344,50 @@ class sql_constructor{
 					}
 				
 				}
+			/*
+			 * an embedded sql from config eg: cfg->select[0]
+			 */
+			if(preg_match("/^query->.*/",$key)){
+				list($statement,$index) =explode("[",str_replace("query->","",$key));
+				$statement=trim($statement);
+				$index=trim($index);
+				$index = substr($index, 0,strpos($index, "]"));
+				$_[$key]=$this->cfg->query->$statement;
+				$_[$key]=$_[$key][$index]->string;
+				//drop command delimiter
+				for($i=strlen($_[$key])-1;$i>0;$i--){
+					if (preg_match("/[\s\n\t\r;]/",$_[$key][$i])){
+						$_[$key][$i]="";
+					}
+					else $i=0;
+				}
+				$_[$key]=str_replace("\0","",$_[$key]);
+			}
+			if($key=="columns")if(!$_["columns"])$_["columns"]=" * ";
+				
+			/**
+			 * SQL-COMMAND WORDS
+			 * the Request are built just like in SQL, with some additional rules.
+			 * FROM
+			 * defaults to  'from folder|class|table-name'
+			 * WHERE
+			 * Between Operands and Operator must be a Spacechar, 
+			 * eg: 'x > y' is valid, 'x>y' is not.
+			 * Equality can be expressed as 'eq' 
+			 * despite the possibilities to mask '=';
+			 */
+			if($key=="from"){
+				if(!preg_match("/^from /",$_["from"])){
+					if($_["from"])$_["from"] ="from ".$_["from"];
+					else $_["from"]="from ".$_["table"];
+					}
+				}
+			if($key=="where") if($_["where"]) if(!preg_match("/^where /",$_["where"]))  $_["where"] ="where ".preg_replace("/ eq /"," = ", $_["where"]);	 
+			if($key=="having")if($_["having"])if(!preg_match("/^having /",$_["having"]))$_["having"]="having ".$_["having"];
+			if($key=="group") if($_["group"]) if(!preg_match("/^group /",$_["group"]))  $_["group"] ="group by ".$_["group"];
+			if($key=="order") if($_["order"]) if(!preg_match("/^order /",$_["order"]))  $_["order"] ="order by ".$_["order"];
+			if($key=="limit") if($_["limit"]) if(!preg_match("/^limit /",$_["limit"]))  $_["limit"] ="limit ".$_["limit"];
+			if($key=="offset")if(isset($_["offset"]))if(!preg_match("/^offset /",$_["offset"]))$_["offset"]="offset ".$_["offset"];
 		
 			if($key=="set"){
 				$cols=array();
@@ -349,7 +401,20 @@ class sql_constructor{
 				}
 				$_["set"]="set ".implode(",",$cols);			
 			}
+			/*
+			 * take columns as is, if columns has value
+			 * else build from submitted key-value-pairs
+			 */
+			if($key=="columns" && !$_[$key]){
+				$cols=array();
+
+				foreach($this->cfg->columns as $_key => $def){
+						if($_[$_key])
+							array_push($cols,'"'.$_key.'"');
+				}
+				$_[$key]=implode(",",$cols);
 				
+			}				
 			if($key=="values"){
 				$cols=array();
 				foreach($this->cfg->columns as $_key => $def){
@@ -359,19 +424,13 @@ class sql_constructor{
 							array_push($cols,"ifnull((SELECT max(id) FROM $_[table])+1,1)");
 					elseif($_[$_key]){
 							array_push($cols,"'$_[$_key]'");
-					}else
-						array_push($cols,"null");
-				
+					}
 				}
 				$_["values"]=implode(",",$cols);			
 			}
 
-			//
-			//
-			//
+			//The value
 			$k=$_[$key];
-			//
-			//
 			//
 			
 			//OBJECT
@@ -395,15 +454,24 @@ class sql_constructor{
 				}
 				$qobj->string=str_replace(":".$key,$k,$qobj->string);
 				}
-			}	 				
+			}
+			
 		}
 		$this->stmt= &$stmt;		
 	}
-
-		//typical arrayAggregation sum , concat , binsum
+	/**
+	 * 
+	 * typical arrayAggregation sum
+	 * @param number() $a
+	 */
 	public	function param_sum(&$a){
 			$a = array_sum($a);
 		}
+	/**
+	 * 
+	 * typical arrayAggregation binary summary
+	 * @param bool() $a
+	 */
 	public	function param_binsum(&$a){
 			$sum=0;
 			foreach($a as $i => $value){
@@ -411,6 +479,13 @@ class sql_constructor{
 			}
 			$a=$sum;
 		}
+	/**
+	 * 
+	 * typical arrayAggregation concatenation
+	 * @param mixed() $a
+	 * @param char $delim
+	 * @param char $mask
+	 */
 	public	function param_concat(&$a,$delim=",",$mask=""){
 			$concat=array();
 			foreach($a as $i => $value) $concat[$i]=$value;

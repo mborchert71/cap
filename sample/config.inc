@@ -36,14 +36,14 @@
 						  {
 						   "prepare" : [{"name":"table","required":true}]
 						   ,
-						   "string":"DROP TABLE IF EXISTS :table;"
+						   "string":"drop table if exists :table;"
 						   ,
 						   "method":"execute"
 						  },
 						  {
-						   "prepare" : [{"name":"table","required":true},"cols"]
+						   "prepare" : [{"name":"table","required":true}]
 						   ,
-						   "string":"CREATE TABLE :table(:columns);"
+						   "string":"create table :table(:columns);"
 						   ,
 						   "method":"execute"
 						  }
@@ -51,16 +51,14 @@
 				"select":[
 						 {
 						   "prepare":[
-						   		{"name":"columns","defaultValue":"*"}
-						   		,
-						   		 "table","where","order"
+						   		"columns","from","where","order"
 						         ,
 						        {"name":"offset","defaultValue":0}
 						        ,
 						        {"name":"limit","defaultValue":1000}
 						      ]
 						   ,
-						   "string" : "SELECT :columns FROM :table :where :order LIMIT :limit OFFSET :offset;"
+						   "string" : "select :columns :from :where :order :limit :offset;"
 						   ,
 						   "method":"fetch_all_assoc"
 						   ,
@@ -68,9 +66,9 @@
 						 }
 						,
 						 {
-						   "prepare":[{"name":"table","required":true}]
+						   "prepare":["query->select[0]"]
 						   ,
-						   "string":"SELECT COUNT(*) AS rows FROM :table;"
+						   "string":"select count(*) from (:query->select[0])s0;"
 						   ,
 						   "method":"fetch_number"
 						   ,
@@ -111,16 +109,22 @@
 						],
 				  "delete":[
 							 {
-							  "prepare":[{"name":"table","required":true},{"name":"where","required":true}]
+							  "prepare":["from",{"name":"where","required":true}]
 							  ,
-							  "string" : "DELETE from :table :where;"
+							  "string" : "delete :from :where;"
 							  ,
 							  "method":"execute"
 							 }
 						],
-				  "next_id":[{
-				  	 		"prepare":[{"name":"table","required":true}],
-				  			"string":"SELECT max(id)+1 FROM :table"
+				  "next_id":[
+				  			{
+				  	 		 "prepare":[{"name":"table","required":true}]
+				  	 		 ,
+				  			 "string":"SELECT max(id)+1 FROM :table"
+						     ,
+						     "method":"fetch_number"
+						     ,
+						     "result":"next_id"
 				  			}
 				  		]
 		}
