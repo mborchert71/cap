@@ -1,0 +1,10 @@
+<Files cap>
+order allow,deny
+deny from all
+satisfy all
+</Files>
+<Files *.inc>
+order allow,deny
+deny from all
+satisfy all
+</Files>
