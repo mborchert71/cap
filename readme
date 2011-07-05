@@ -3,7 +3,7 @@ sample - cap
 	copy and paste api 
 	-uses folders , sqlite and php pdo 
 		to create a simple way of having easy access to a database or
-		a transparent base structure for a more sophisticated db-connector via web.
+		a transparent base structure for a more sophisticated db-connection via web.
 
 	- so many folders with SQL - Command Words
 	as I always preferred the server to be responsible for authentication (i even like the popup)
@@ -26,11 +26,13 @@ sample - cap
 		# cloud is great,but from  personal point of view its better having a real world disc. 
 
 todo:
-	tests
+	tests,db-index handle joins and union 
 
-Version 0.2.0
+Version 0.3.0
 
 Changes
+2011-07-04	darum alles von tabellen-fokus zum datenbank-fokus, 'get' + 'set' für sinnigere url: sample/get/?next_id == sample/?do=next_id == sample/?next_id
+          	kaum eine zahl als version festgelegt schon ist das Ding unbrauchbar. echt[cursed]
 2011-07-03	deleted class.php cause its not needed in an single-sample environment;finished query token (left out:union,join,on)
 2011-06-25	ported from mysql to sqlite , if table not exist automatic creation
 2011-06-16	datamodel + queries moved to config.inc . sqlite connection

@@ -1,25 +1,31 @@
 <?php	
 /**
  *
- */
-define ("DEBUG",@$_REQUEST["debug"]); 
-
-if(!defined(MODULE_SRC)){
-	define (MODULE_SRC,"module.php");
-	include(MODULE_SRC);
-}
-
-$c=json_decode(file_get_contents("config.inc"));
-$c->request=&$_REQUEST;
-
-/*
  * folder-name is module-name is class-name
  */
-$_REQUEST["table"]=array_pop(explode("/",str_replace(array("\\"),"/",getcwd())));
-// include ($_REQUEST["table"].".php");
-eval ( "class {$_REQUEST["table"]} extends module{}" );
+$c=json_decode(file_get_contents("config.inc"));
+$c->request = &$_REQUEST;
 
-$MOD = new $_REQUEST["table"](&$c);
+if(!$c->table || !$c->database || !$c->path){
+	$adir  = explode("/",str_replace(array("\\"),"/",getcwd()));	
+	$class = $c->table 	 = array_pop($adir);
+					 $c->database= array_pop($adir);
+					 $c->path    = implode("/",$adir);
+	}
+					 
+if(!defined(DEBUG)){
+	define (DEBUG, @$_REQUEST["debug"]);
+	}
+
+if(!defined(MODULE_SRC)){
+	define (MODULE_SRC,"../module.php");
+	include(MODULE_SRC);
+	}
+
+// include($class.".php");
+eval ( "class $class extends module{}" );
+
+$MOD = new $class(&$c);
 						//$datahandle=&$MOD->get_data_handle();
 $MOD -> request_prepare();
 						//$request	= &$MOD->get_request_data();

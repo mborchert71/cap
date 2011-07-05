@@ -3,14 +3,13 @@
 "host"			:""			,
 "user"			:""			,
 "pass"			:""			,
-"dbase"			:"dbase"	,
-"persistent"	:0			,
+"persistent":0			,
 "port"			:3300		,
 "socket"		:""			,
-"language"		:"de"		,
-"max_limit" 	:1000		,
-"respond_in"	:"json"		,
-"columns"			:{
+"language"	:"de"		,
+"max_limit" :1000		,
+"respond_in":"json"		,
+"columns"		:{
 		"category"	:"varchar(45)",
 		"cluster"	:"varchar(45)",
 		"id"		:"integer(9)  NOT NULL DEFAULT 1  PRIMARY KEY",
@@ -23,7 +22,7 @@
 "query"			:{
 				"describe":[
 						{
-						"prepare":[{"name":"table","required":true}]
+						"prepare":["table"]
 						,
 						"string":"SELECT * FROM sqlite_master UNION SELECT 'sqlite_version' as type,sqlite_version() as name,null as tbl_name,null as rootpage,null as sql  ORDER BY type "
 						,
@@ -34,14 +33,14 @@
 						],
 				"create":[
 						  {
-						   "prepare" : [{"name":"table","required":true}]
+						   "prepare" : ["table"]
 						   ,
 						   "string":"drop table if exists :table;"
 						   ,
 						   "method":"execute"
 						  },
 						  {
-						   "prepare" : [{"name":"table","required":true}]
+						   "prepare" : ["table"]
 						   ,
 						   "string":"create table :table(:columns);"
 						   ,
@@ -78,7 +77,7 @@
 				  "update":[
 						 {
 						   "prepare" : [
-						   	   {"name":"table","required":true}
+						   	   "table"
 						   	   ,
 						       {"name":"where","required":true}
 						       ,
@@ -93,11 +92,9 @@
 				  "insert":[
 						  {
 						   "prepare" : [
-						   		{"name":"table","required":true}
+						   		"table"
 						   		,
-						   		{"name":"id","defaultValue":"rowid"}
-						   		,
-						       {"name":"columns"}
+						       "columns"
 						       ,
 						       "values"
 						        ]
@@ -118,7 +115,7 @@
 						],
 				  "next_id":[
 				  			{
-				  	 		 "prepare":[{"name":"table","required":true}]
+				  	 		 "prepare":["table"]
 				  	 		 ,
 				  			 "string":"SELECT max(id)+1 FROM :table"
 						     ,
