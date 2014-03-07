@@ -1,19 +1,22 @@
-**cap
+** CAP **
 
 Copy And Paste database-api
 
-	# global-player-sites have/offer huge data-amount >>> customers have/get personalized small snapshot
++ global-player-sites have/offer huge data-amount >>> customers have/get personalized small snapshot
 	
- 	# there is no guarantie that the g-p-s keep and/or offer! the data in future.
++ there is no guarantie that the g-p-s keep and/or offer! the data in future.
 
-	# cloud is great, but from  private point of view the personal data's original source should be at home! 
++ cloud is great, but from  private point of view the personal data's original source should be at home! 
 
-	# cap uses folders, sqlite and php-pdo to create a simple way of having easy access to a database via the internet.
++ cap uses folders, sqlite and php-pdo to create a simple way of having easy access to a database via the internet.
 	
-	# access via GET and/or POST.
++ access via GET and/or POST.
+
++ See the Sample-FolderContent to get a clue. 
+
 
 todo:
-	tests,db-index handle joins and union 
+	tests,db-index, handle joins and union 
 
 Version 0.3.0
 
